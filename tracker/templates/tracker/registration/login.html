@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<form method="post">
+  {% csrf_token %}
+
+  <h1 class="h3 mb-3 font-weight-normal">Login</h1>
+
+    <input type="email" name="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus>
+
+  <input type="password" name="password" id="inputPassword" class="form-control" placeholder="Password" required>
+
+  {% for field in login_form %}
+    <p>
+      {{ field.label_tag }}
+      {{ field }}
+
+      {% if field.help_text %}
+        <small style="color: gray;">{{ field.help_text }}</small>
+      {% endif %}
+    </p>
+  {% endfor %}
+
+  {% for field in login_form %}
+      <p>
+        {% for error in field.errors %}
+          <p style="color: red">{{ error }}</p>
+        {% endfor %}
+      </p>
+  {% endfor %}
+
+  {% if login_form.non_field_errors %}
+    <div style="color: red">
+      <p>{{login_form.non_field_errors}}</p>
+    </div>
+
+  {% endif %}
+
+  <button class="btn btn-lg btn-primary " type="submit">Log in</button>
+
+</form>
+  <p><a href="{%url 'register' %}">New to the website? Register now!</a></p>
+  {# Assumes you setup the password_reset view in your URLconf #}
+  <p><a href="{% url 'password_reset' %}">Forget Password?</a></p>
+
+{% endblock %}

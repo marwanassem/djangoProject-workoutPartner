@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>New Workout</h1>
+<form method="post">
+  {% csrf_token %}
+  {{ workout_form.as_p }}
+
+    <button name="add_exercise" >Add exercise!</button>
+
+<!--  <button name="save_workout" type="submit" class="save btn tbn-default" >Save Workout</button>-->
+</form>
+
+{% endblock %}

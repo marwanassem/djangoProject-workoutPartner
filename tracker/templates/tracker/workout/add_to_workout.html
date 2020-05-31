@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1> Workout Name:  {{ Workout.Name }} </h1>
+<h3> # of Exercises: {{Workout.exercise.count }}</h3>
+<h3> Created: {{ Workout.creation_date }}</h3>
+
+<div>
+    {% if Workout.exercise.count > 0 %}
+        {% for i in Workout.exercise.all %}
+          <p>{{i.ExcName}}</p>
+          <p>{{i.set_reps}}</p>
+          <p>{{i.Note}}</p>
+          <br>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+  <button name="add_exercise" type="submit" class="save btn tbn-default" >Add exercise!</button>
+</form>
+
+<form method="post">
+    {% csrf_token %}
+    <button name="publish_workout">Publish workout</button>
+
+</form>
+
+
+{% endblock %}
