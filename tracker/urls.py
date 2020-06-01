@@ -6,7 +6,6 @@ urlpatterns = [
     path('about/', views.AboutView.as_view(), name='about'),
     path('workout/', views.WorkoutListView.as_view(), name='home'),
     path('workout/<int:id>/working', views.adding_exercise_to_workout, name='adding_exercise_to_workout'),
-
     path('workout/<int:id>/', views.workout_detail, name='workout_detail'),
     path('workout/new/', views.new_workout, name='new_workout'),
     path('workout/<int:pk>/edit/', views.WorkoutUpdateView.as_view(), name='workout_edit'),

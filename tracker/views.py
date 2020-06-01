@@ -12,13 +12,6 @@ from tracker.forms import *
 
 from django.http import HttpResponse
 from django.contrib.auth import login, authenticate
-from django.contrib.sites.shortcuts import get_current_site
-from django.utils.encoding import force_bytes, force_text
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.template.loader import render_to_string
-from .tokens import account_activation_token
-from django.contrib.auth.models import User
-from django.core.mail import EmailMessage
 
 
 class AboutView(TemplateView):
@@ -30,9 +23,7 @@ class WorkoutListView(ListView):
     template_name = 'workout/workout_list.html'
 
     def get_queryset(self):
-        # return Workout.objects.filter(creation_date__lte=timezone.now()).order_by('-creation_date')
-        return Workout.objects.filter(is_published = True)
-        return Workout.objects.all()
+        return Workout.objects.filter(is_published=True)
 
 
 class WorkoutUpdateView(LoginRequiredMixin, UpdateView):
@@ -250,7 +241,7 @@ def register_lifter(request):
             email = form.cleaned_data['email']
             password = form.cleaned_data['password1']
             lifter = authenticate(email=email, password=password)
-            login(request, lifter)
+            login(request, user=lifter)
             return redirect('home')
         else:
             context['form'] = form
@@ -261,29 +252,40 @@ def register_lifter(request):
     return render(request, 'registration/register.html', context=context)
 
 
-def login(request):
+def login_lifter(request):
     context = {}
-    user = request.user
-    if user.is_authenticated:
-        return redirect('home')
+    print(request)
+    # user = request.user
+    print('**** loging in ****')
+    # if user.is_authenticated:
+    #     print('user is_authenticated')
+    #     return redirect('home')
 
     if request.method == 'POST':
+        print('**** posting ****')
         form = LifterAuthenticationForm(request.POST)
+        print(request.POST)
         if form.is_valid():
+            print('**** valid form ****')
             email = request.POST['email']
             password = request.POST['password']
             user = authenticate(email=email, password=password)
+            print(user)
 
             if user:
+                print('authenticated')
                 login(request, user)
                 return redirect('home')
-
+        else:
+            print('not valid')
+            print(form.errors)
+            print(form.cleaned_data)
     else:
         form = LifterAuthenticationForm()
 
     context['login_form'] = form
 
-    return render(request, 'registration/login.html', context)
+    return render(request, 'registration/login.html', context=context)
 
 
 def temp_view(request):

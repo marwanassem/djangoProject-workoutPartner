@@ -15,13 +15,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from tracker.views import temp_view, login
+from tracker.views import temp_view, login_lifter
 from tracker.views import register_lifter
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('tracker/', include('tracker.urls')),
     path('', temp_view, name='temp_view'),
-    path('accounts/login', login, name='login'),
+    path('accounts/login/', login_lifter, name='login'),
     path('accounts/', include('django.contrib.auth.urls')),
 ]

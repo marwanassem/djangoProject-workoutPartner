@@ -3,27 +3,8 @@ from django.utils import timezone
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
 
-# class Lifter(models.Model):
-#     first_name = models.CharField(max_length=50)
-#     last_name = models.CharField(max_length=50)
-#     username = models.CharField(max_length=50, unique=True)
-#     password = models.CharField(max_length=50)
-#     password_confirmation = models.CharField(max_length=50)
-#     email = models.EmailField(unique=True)
-#     GENDER_CHOICES = (
-#         ('M', 'Male'),
-#         ('F', 'Female')
-#     )
-#     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
-#     DOB = models.DateField()
-#     is_active = models.BooleanField(default=False)
-#
-#     def __str__(self):
-#         return self.first_name + " " + self.last_name
-
-
 class LifterAccountManager(BaseUserManager):
-    def create_user(self, email, username, first_name, last_name, gender, DOB, password=None):
+    def create_user(self, email, username, first_name, last_name, password=None):
         if not email:
             raise ValueError('Users must have an email address')
         if not username:
@@ -32,25 +13,31 @@ class LifterAccountManager(BaseUserManager):
             raise ValueError('Users must have a first name')
         if not last_name:
             raise ValueError('Users must have a last name')
-        if not gender:
-            raise ValueError('Users must have a gender')
-        if not DOB:
-            raise ValueError('Users must have a date of birth')
+        # if not gender:
+        #     raise ValueError('Users must have a gender')
+        # if not DOB:
+        #     raise ValueError('Users must have a date of birth')
 
         user = self.model(
             email=self.normalize_email(email),
             username=username,
+            first_name=first_name,
+            last_name=last_name,
+
         )
 
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, username, password):
+    def create_superuser(self, email, username, first_name, last_name,  password):
         user = self.create_user(
             email=self.normalize_email(email),
             password=password,
             username=username,
+            first_name=first_name,
+            last_name=last_name,
+
         )
         user.is_admin = True
         user.is_staff = True
@@ -74,11 +61,11 @@ class Lifter(AbstractBaseUser):
                 ('M', 'Male'),
                 ('F', 'Female')
             )
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
-    DOB = models.DateField()
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
+    DOB = models.DateField(null=True, blank=True)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'gender', 'DOB']
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name',]
 
     objects = LifterAccountManager()
 
