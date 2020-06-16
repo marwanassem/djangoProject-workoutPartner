@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>{{ muscle.Name }} Exercises</h1>
+
+{% if objects.count == 0 %}
+    <h4 style="color: red">No exercises available</h4>
+
+{% else %}
+    {% for exc in objects %}
+        <a style="font-family: SansSerif" href="{% url 'build_workout' w_id exc.pk %}">{{ exc.ExcName }}</a>
+
+        {% if not exc.set_record %}
+            <h5 style="color: gray; font-weight: bold">No previous record of SETS</h5>
+        {% else %}
+            <h5>{{exc.set_record | last }}</h5>
+        {% endif %}
+
+        {% if not exc.weight_record %}
+            <h5 style="color: gray; font-weight: bold">No previous record of WEIGHTS</h5>
+        {% else %}
+            <h5>{{ exc.weight_record | last }}</h5>
+        {% endif %}
+
+    {% endfor %}
+{% endif %}
+
+<h2>Add New Exercise</h2>
+<form method="post">
+    {% csrf_token %}
+    {% for field in exc_form %}
+            <p>
+                {{ field.label_tag }}
+                {{ field }}
+
+                {% if field.help_text %}
+                    <small style="color:grey;">{{ field.help_text }}</small>
+                {% endif %}
+
+                {% for error in field.errors %}
+                    <p style="color: red;">{{ error }}</p>
+                {% endfor %}
+            </p>
+        {% endfor %}
+
+    <button type="submit">Add</button>
+</form>
+
+{% endblock %}

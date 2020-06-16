@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1 style="color: darkblue">Building Workout</h1>
+<h1 style="color: firebrick">Workout Name: {{ workout.Name }}</h1>
+<h3># Exercises: {{ workout.exercise.count }}</h3>
+
+{% for exc in workout.exercise.all %}
+    <p style="color: blue">{{ exc.ExcName }}</p>
+    <p style="color: darkred">{{ exc.set_reps }}</p>
+    <p style="color: darkred">{{ exc.Note }}</p>
+{% endfor %}
+
+{% if received_exercise %}
+    <h3>Add the following for: {{ received_exercise }}</h3>
+    <form method="post">
+        {% csrf_token %}
+        {% for field in exercise_form %}
+            <p>
+                {{ field.label_tag }}
+                {{ field }}
+
+                {% if field.help_text %}
+                    <small style="color:grey;">{{ field.help_text }}</small>
+                {% endif %}
+
+                {% for error in field.errors %}
+                    <p style="color: red;">{{ error }}</p>
+                {% endfor %}
+            </p>
+        {% endfor %}
+
+         <button type="submit" name="add_to_workout"> Add Exercise </button>
+    </form>
+{% endif %}
+
+<h3>Choosing Muscle</h3>
+
+<form name="choose_muscle" method="post">
+    {% csrf_token %}
+
+    {% for field in muscle_form %}
+          <p>
+                {{ field.label_tag }}
+                {{ field }}
+
+                {% if field.help_text %}
+                    <small style="color:grey;">{{ field.help_text }}</small>
+                {% endif %}
+
+                {% for error in field.errors %}
+                    <p style="color: red;">{{ error }}</p>
+                {% endfor %}
+            </p>
+    {% endfor %}
+
+    <button name="muscle_exercises"> Explore Exercises </button>
+</form>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" name="publish_workout" class="btn btn-lg btn-primary">Publish workout</button>
+</form>
+
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<!--<h1 style="color: firebrick">{{ workout.Name }}</h1>-->
+
+<!--{% if workout.exercise.count > 0 %}-->
+<!--    <h3># Exercises: {{ workout.exercise.count }}</h3>-->
+
+
+<!--    {% for exc in workout.exercise.all %}-->
+<!--        <p style="color: blue">{{ exc.ExcName }}</p>-->
+<!--        <form name="{{ exc.ExcName }}" method="post">-->
+<!--            {% csrf_token %}-->
+<!--            {% for field in exercise_form %}-->
+<!--                <p>-->
+<!--                    {{ field.label_tag }}-->
+<!--                    {{ field }}-->
+
+<!--                    {% if field.help_text %}-->
+<!--                        <small style="color:grey;">{{ field.help_text }}</small>-->
+<!--                    {% endif %}-->
+
+<!--                    {% for error in field.errors %}-->
+<!--                        <p style="color: red;">{{ error }}</p>-->
+<!--                    {% endfor %}-->
+<!--                </p>-->
+<!--    {% endfor %}-->
+
+<!--    <button type="submit" name="add_to_workout"> Add Exercise </button>-->
+
+<!--        </form>-->
+<!--        <p>Record: {{ exc.record }}</p>-->
+<!--    {% endfor %}-->
+
+<!--{% endif %}-->
+
+<h3>Choosing Muscle</h3>
+
+<form method="post" >
+    {% csrf_token %}
+
+    {% for field in muscle_form %}
+          <p>
+                {{ field.label_tag }}
+                {{ field }}
+
+                {% if field.help_text %}
+                    <small style="color:grey;">{{ field.help_text }}</small>
+                {% endif %}
+
+                {% for error in field.errors %}
+                    <p style="color: red;">{{ error }}</p>
+                {% endfor %}
+            </p>
+    {% endfor %}
+
+    <button> Explore Exercises </button>
+</form>
+
+<!--<form method="post">-->
+<!--    {% csrf_token %}-->
+<!--    <button name="publish_workout" class="btn btn-lg btn-primary">Publish workout</button>-->
+<!--</form>-->
+
+{% endblock %}

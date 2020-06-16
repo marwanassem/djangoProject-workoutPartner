@@ -29,12 +29,14 @@ class WorkoutListView(ListView):
 class WorkoutUpdateView(LoginRequiredMixin, UpdateView):
     login_url = '/login/'
     template_name = 'workout/workout_edit.html'
-    # redirect_field_name = 'tracker/workout/workout_detail.html'
     form_class = WorkoutEditForm
     model = Workout
 
     def get_success_url(self):
         return reverse(viewname='home')
+
+    def form_invalid(self, form):
+        print(form.fields)
 
 
 class WorkoutDeleteView(LoginRequiredMixin, DeleteView):
@@ -48,6 +50,13 @@ class WorkoutDeleteView(LoginRequiredMixin, DeleteView):
     def get_success_url(self):
         return reverse(viewname='home')
 
+
+class MuscleListView(ListView):
+    model = MuscleGroup
+    template_name = 'muscle/muscles_list.html'
+
+    def get_queryset(self):
+        return MuscleGroup.objects.all()
 
 class CreateMuscleGroupView(LoginRequiredMixin, CreateView):
     login_url = '/login/'
@@ -82,6 +91,7 @@ def add_exercise(request, id):
                 muscle=exc_muscle,
                 set_reps=exc_set_reps,
                 Note=exc_note,
+                Creator=lifter
             )
             exc_saved.save()
 
@@ -104,7 +114,6 @@ def adding_exercise_to_workout(request, id):
     form = ExerciseToWorkout()
 
     if request.POST.get('publish_workout') == '':
-        print('**** Publishing Workout ****')
         workout.is_published = True
         workout.save()
         return redirect('home')
@@ -117,8 +126,6 @@ def adding_exercise_to_workout(request, id):
         'form': form
     }
 
-    print(request.POST)
-
     return render(request, 'workout/add_to_workout.html', context)
 
 
@@ -129,38 +136,20 @@ def new_workout(request):
     workout_form = WorkoutForm()
     workout = None
 
-    if request.POST.get("add_exercise") == '':
-
+    if request.POST.get("start") == '':
         workout_form = WorkoutForm(request.POST)
         if workout_form.is_valid():
-            print('**** Valid Workout form ****')
-
             workout = workout_form.save(commit=False)
-            print(workout.pk)
             workout.Creator = lifter
             workout.save()
-            print(workout.pk)
-            # lifter.workouts.add(workout)
-            return redirect('adding_exercise_to_workout', id=workout.pk)
-        else:
-            print('**** Not Valid Workout form ****')
+            return redirect('working', w_id=workout.pk)
 
-    if request.method == "POST":
-        if workout_form.is_valid():
-            workout.save()
-            return redirect('workout_detail')
-        else:
-            print(workout_form.errors)
-            return render(request, 'workout/workout_form.html', {'workout_form': workout_form})
-
-    else:
-        return render(request, 'workout/workout_form.html', {'workout_form':workout_form})
+    return render(request, 'workout/workout_form.html', {'workout_form': workout_form})
 
 
 @login_required
 def workout_detail(request, id):
     workout = get_object_or_404(Workout, id=id)
-
     context = {
         'workout':workout,
     }
@@ -168,19 +157,45 @@ def workout_detail(request, id):
 
 
 @login_required
-def delete_workout(request, id):
-    form = DeleteWorkoutForm()
-    obj = get_object_or_404(Workout, id=id)
+def edit_exercise(request, id, id2):
+    workout = get_object_or_404(Workout, id=id)
+    exc = get_object_or_404(Exercise, id=id2)
+
+    if request.method == 'POST':
+        form = EditExerciseForm(request.POST)
+        if form.is_valid():
+            exc.weight = form.cleaned_data['weight']
+            exc.set_reps = form.cleaned_data['set_reps']
+            exc.Note = form.cleaned_data['Note']
+            exc.save()
+            workout.save()
+            return redirect('workout_detail', id=id)
+        else:
+            form = EditExerciseForm()
+    else:
+        form = EditExerciseForm()
+    return render(request, 'exercise/edit_exercise.html', {'form':form})
+
+
+@login_required
+def delete_exercise(request, id, id2):
+    workout = get_object_or_404(Workout, id=id)
+    exc = get_object_or_404(Exercise, id=id2)
+    form = DeleteExerciseForm()
+
     context = {
         'form': form,
-        'obj': obj
+        'obj': exc,
     }
+
     if request.method == 'POST':
-        # form = DeleteWorkoutForm(request.POST)
-        obj.delete()
-        return redirect('home')
-    else:
-        return render(request, 'workout/confirm_delete.html', context=context)
+        exc.delete()
+        workout.save()
+
+        return redirect('workout_detail', id=id)
+
+    return render(request, 'exercise/del_exercise.html', context=context)
+
 
 @login_required
 def add_exercise_to_workout(request, id):
@@ -197,40 +212,6 @@ def add_exercise_to_workout(request, id):
     return render(request, 'tracker/exercise/exercise_to_workout.html')
 
 
-@login_required
-def remove_exercise_from_workout(request, pk):
-    exercise = get_object_or_404(Exercise, pk=pk)
-    workout_pk = exercise.workout.pk
-    # Need to check whether it deletes the exc from only the workout or from the whole DB.
-    exercise.delete()
-    return redirect('workout/workout_detail.html', pk=workout_pk)
-
-
-@login_required
-def publish_workout(request, pk):
-    workout = get_object_or_404(Workout, pk=pk)
-    workout.add_workout()
-    return redirect('workout/workout_detail.html', pk=pk)
-
-
-@login_required
-def edit_workout(request):
-    pass
-
-
-@login_required
-def delete_workout(request):
-    pass
-
-
-@login_required
-def delete_exercise(request, pk):
-    exercise = get_object_or_404(Exercise, pk=pk)
-    muscle_pk = exercise.muscle.pk
-    exercise.delete()
-    redirect('muscle/muscle_detail.html', pk=muscle_pk)
-
-
 def register_lifter(request):
     context = {}
     form = SignUpForm()
@@ -238,9 +219,9 @@ def register_lifter(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             form.save()
-            email = form.cleaned_data['email']
+            username = form.cleaned_data['username']
             password = form.cleaned_data['password1']
-            lifter = authenticate(email=email, password=password)
+            lifter = authenticate(username=username, password=password)
             login(request, user=lifter)
             return redirect('home')
         else:
@@ -254,32 +235,20 @@ def register_lifter(request):
 
 def login_lifter(request):
     context = {}
-    print(request)
-    # user = request.user
-    print('**** loging in ****')
-    # if user.is_authenticated:
-    #     print('user is_authenticated')
-    #     return redirect('home')
+    user = request.user
+    if user.is_authenticated:
+        return redirect('home')
 
     if request.method == 'POST':
-        print('**** posting ****')
         form = LifterAuthenticationForm(request.POST)
-        print(request.POST)
         if form.is_valid():
-            print('**** valid form ****')
-            email = request.POST['email']
+            username = request.POST['username']
             password = request.POST['password']
-            user = authenticate(email=email, password=password)
-            print(user)
+            user = authenticate(username=username, password=password)
 
             if user:
-                print('authenticated')
                 login(request, user)
                 return redirect('home')
-        else:
-            print('not valid')
-            print(form.errors)
-            print(form.cleaned_data)
     else:
         form = LifterAuthenticationForm()
 
@@ -290,3 +259,138 @@ def login_lifter(request):
 
 def temp_view(request):
     return HttpResponse('Go to /accounts please')
+
+
+def retrieve_muscle(request, w_id):
+    form = MuscleForm()
+    workout = get_object_or_404(Workout, id=w_id)
+    name = None
+    id = ''
+
+    if request.method == 'POST' and request.POST.get("publish_workout") == '':
+        workout.publish_workout()
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = MuscleForm(request.POST)
+        if form.is_valid():
+            name = form.cleaned_data['Name']
+            muscle = MuscleGroup.objects.all()
+
+            for m in muscle:
+                if m.Name == name:
+                    id = m.pk
+                    break
+
+            if id is None:
+                return HttpResponse("Not found")
+
+            return redirect('muscle_exc', w_id=w_id, muscle_id=id)
+
+    form = MuscleForm()
+    context = {
+        'muscle_form': form,
+        'workout': workout,
+    }
+    return render(request, 'workout/build_workout.html', context=context)
+
+
+def retrieve_exercises(request, w_id, muscle_id):
+    print('retrieving exercises')
+    workout = get_object_or_404(Workout, pk=w_id)
+    muscle = MuscleGroup.objects.get(pk=muscle_id)
+    exc_list = Exercise.return_exercises(Exercise, muscle)
+    form = ExerciseForm()
+
+    context = {
+        'muscle': muscle,
+        'objects': exc_list,
+        'w_id': workout.pk,
+        'exc_form': form,
+    }
+
+    if request.method == 'POST':
+        form = ExerciseForm(request.POST)
+        if form.is_valid():
+            form.save(commit=False)
+            creator = request.user
+            exc_name = form.cleaned_data['ExcName']
+
+            new_exercise = Exercise.objects.create(
+                ExcName=exc_name,
+                Creator=creator,
+                muscle=muscle,
+            )
+
+            new_exercise.save()
+            workout.exercise.add(new_exercise)
+            workout.save()
+            return redirect('build_workout', w_id=w_id, e_id=new_exercise.pk)
+    else:
+        print(request.POST)
+
+    return render(request, 'muscle/muscle_exercises.html', context=context)
+
+
+def handle_adding_workout(request, w_id, e_id):
+    form = ExerciseBuildingForm()
+    muscle_form = MuscleForm()
+    workout = get_object_or_404(Workout, id=w_id)
+    exercise = get_object_or_404(Exercise, id=e_id)
+
+    context = {
+        'exercise_form': form,
+        'workout': workout,
+        'muscle_form': muscle_form,
+        'received_exercise': exercise.ExcName,
+    }
+    print(request.POST)
+    if request.method == 'POST' and request.POST.get("add_to_workout") == '':
+        form = ExerciseBuildingForm(request.POST)
+        if form.is_valid():
+            print('valid form')
+            exercise.weight = form.cleaned_data['weight']
+            exercise.Note = form.cleaned_data['Note']
+            exercise.set_reps = form.cleaned_data['set_reps']
+            exercise.set_record.append(form.cleaned_data['set_reps'])
+            exercise.weight_record.append(form.cleaned_data['weight'])
+            exercise.save()
+            workout.exercise.add(exercise)
+            workout.save()
+            return redirect('working', w_id=w_id)
+        else:
+            print(form.errors)
+    elif request.method == 'POST' and request.POST.get("muscle_exercises") == '':
+        return retrieve_muscle(request, workout.pk)
+    elif request.method == 'POST' and request.POST.get("publish_workout") == '':
+        workout.publish_workout()
+        return redirect('home')
+    else:
+        form = ExerciseBuildingForm()
+        context = {
+            'exercise_form': form,
+            'workout': workout,
+            'muscle_form': muscle_form,
+            'received_exercise': exercise.ExcName,
+        }
+
+    return render(request, 'workout/build_workout.html', context=context)
+
+
+def retrieve_record(request, w_id, e_id):
+    exercise = get_object_or_404(Exercise, id=e_id)
+    set_record = exercise.set_record[len(exercise.set_record)-1]
+    weight_record = exercise.weight_record[len(exercise.weight_record)-1]
+
+    return HttpResponse('last record: ' + str(set_record))
+
+
+@login_required
+def workout_search(request):
+    if request.method == 'POST':
+        name = request.POST.get('workout_name', False)
+        workout = Workout.objects.filter(Name=name).first()
+        if not workout:
+            return HttpResponse('Workout does not exist')
+        return redirect('workout_detail', id=workout.pk)
+    return render(request, 'base.html')

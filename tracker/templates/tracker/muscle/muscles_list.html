@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{% for muscle in musclegroup_list %}
+
+<div>
+    <div class="">
+    <h3>
+
+        <a href="#"> {{ muscle.Name }} </a>
+    </h3>
+    </div>
+
+</div>
+
+{% endfor %}
+{% endblock %}

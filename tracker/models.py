@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django_mysql.models import ListTextField
 
 
 class LifterAccountManager(BaseUserManager):
@@ -64,8 +65,8 @@ class Lifter(AbstractBaseUser):
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
     DOB = models.DateField(null=True, blank=True)
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name',]
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email', 'first_name', 'last_name',]
 
     objects = LifterAccountManager()
 
@@ -85,14 +86,15 @@ class Workout(models.Model):
     Name = models.CharField(max_length=100)
     Creator = models.ForeignKey('Lifter', on_delete=models.PROTECT)
     creation_date = models.DateTimeField(default=timezone.now)
-    exercise = models.ManyToManyField('Exercise', blank=True, null=True, through='WorkoutExercise')
+    exercise = models.ManyToManyField('Exercise', blank=True, null=True, through='WorkoutExercise', related_name='exc')
     is_published = models.BooleanField(default=False)
 
-    def add_workout(self):
+    def publish_workout(self):
+        self.is_published = True
         self.save()
 
-    # def __str__(self):
-    #     return "Workout: " + self.Name + " ,Created by: " + self.Creator.name
+    def __str__(self):
+        return str(self.Name)
 
 
 class MuscleGroup(models.Model):
@@ -108,14 +110,25 @@ class MuscleGroup(models.Model):
 class Exercise(models.Model):
     ExcName = models.CharField(max_length=100)
     muscle = models.ForeignKey('MuscleGroup', on_delete=models.PROTECT)
-    set_reps = models.CharField(max_length=500, default=None, null=True, blank=True)
+    Creator = models.ForeignKey('Lifter', on_delete=models.PROTECT)
+    weight = models.CharField(max_length=500, null=True, blank=True)
+    set_reps = models.CharField(max_length=500, null=True, blank=True)
     Note = models.CharField(max_length=250, blank=True, null=True)
+    set_record = ListTextField(default='', base_field=models.CharField(max_length=50), size=100)
+    weight_record = ListTextField(default='', base_field=models.CharField(max_length=50), size=100)
 
     def create_exercise(self):
         self.save()
 
     def __str__(self):
-        return self.ExcName + " belongs to Muscle Group: " + self.muscle.Name
+        return self.ExcName + ": " + self.muscle.Name
+
+    def return_exercises(self, muscle):
+        exc_list = []
+        for exercise in Exercise.objects.all():
+            if exercise.muscle == muscle:
+                exc_list.append(exercise)
+        return exc_list
 
 
 class Set(models.Model):

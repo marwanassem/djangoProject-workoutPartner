@@ -2,16 +2,27 @@
 
 {% block content %}
 
-<h1>{{ workout.Name }}</h1>
-<h1>{{ workout.creation_date }}</h1>
+<h1>Workout Name: {{ workout.Name }}</h1>
+<h1>Created: {{ workout.creation_date }}</h1>
+
 {% for exc in workout.exercise.all %}
   <ol>
     <li>{{ exc.ExcName }}</li>
 
     <div class="each_set">
       <ol>
+        <li>{{ exc.weight }}</li>
         <li>{{ exc.set_reps }}</li>
         <li>{{ exc.Note }}</li>
+
+        <a href="{% url 'exercise_edit' id=workout.pk id2=exc.pk %}">
+              <p>Update Exercise</p>
+        </a>
+
+        <a href="{% url 'exercise_delete' id=workout.pk id2=exc.pk %}">
+          <p>Delete Exercise</p>
+        </a>
+
       </ol>
     </div>
 
@@ -19,12 +30,12 @@
 {% endfor %}
 
 {% if user.is_authenticated %}
-  <a class="btn btn-primary" href="{% url 'workout_edit' pk=workout.pk%}">
-    <span class="glyphicon glyphicon-pencil"></span>
+  <a href="{% url 'workout_edit' pk=workout.pk%}">
+    <p>Edit Workout</p>
   </a>
 
-  <a class="btn btn-primary" href="{% url 'workout_remove' workout.pk %}">
-    <span class="glyphicon glyphicon-remove"></span>
+  <a href="{% url 'workout_remove' workout.pk %}">
+    <p>Delete Workout</p>
   </a>
 {% endif %}
 

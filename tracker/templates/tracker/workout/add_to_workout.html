@@ -11,6 +11,7 @@
           <p>{{i.ExcName}}</p>
           <p>{{i.set_reps}}</p>
           <p>{{i.Note}}</p>
+
           <br>
         {% endfor %}
     {% endif %}
@@ -18,15 +19,30 @@
 
 <form method="post">
     {% csrf_token %}
-    {{ form.as_p }}
+
+    {% for field in form %}
+        <p>
+            {{ field.label_tag }}
+            {{ field }}
+
+            {% if field.help_text %}
+                <small style="color:grey;">{{ field.help_text }}</small>
+            {% endif %}
+
+            {% for error in field.errors %}
+                <p style="color: red;">{{ error }}</p>
+            {% endfor %}
+        </p>
+    {% endfor %}
 
   <button name="add_exercise" type="submit" class="save btn tbn-default" >Add exercise!</button>
 </form>
 
+
+
 <form method="post">
     {% csrf_token %}
-    <button name="publish_workout">Publish workout</button>
-
+    <button name="publish_workout" class="btn btn-lg btn-primary">Publish workout</button>
 </form>
 
 
